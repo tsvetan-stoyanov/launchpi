@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="org.eclipse.debug.core.launchConfigurationTypes">
+      <launchConfigurationType
+            delegate="org.launchpi.launcher.RPILaunchConfigurationDelegate"
+            id="org.launchpi.launcher"
+            modes="run"
+            name="Raspberry PI"
+            sourceLocatorId="org.eclipse.jdt.launching.sourceLocator.JavaSourceLookupDirector"
+            sourcePathComputerId="org.eclipse.jdt.launching.sourceLookup.javaSourcePathComputer">
+      </launchConfigurationType>
+   </extension>
+   <extension
+         point="org.eclipse.debug.ui.launchConfigurationTabGroups">
+      <launchConfigurationTabGroup
+            class="org.launchpi.launcher.RPITabGroup"
+            id="org.launchpi.launcher.RPITabGroup"
+            type="org.launchpi.launcher">
+      </launchConfigurationTabGroup>
+   </extension>
+   <extension
+         point="org.eclipse.debug.core.launchDelegates">
+      <launchDelegate
+            delegate="org.launchpi.launcher.RPIDebugConfigurationDelegate"
+            id="org.launchpi.launcher.RPIDebugConfigurationDelegate"
+            modes="debug"
+            name="Debug RPI"
+            type="org.launchpi.launcher">
+      </launchDelegate>
+   </extension>
+
+</plugin>
