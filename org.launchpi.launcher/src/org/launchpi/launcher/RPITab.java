@@ -20,6 +20,9 @@ import org.eclipse.rse.core.RSECorePlugin;
 import org.eclipse.rse.core.model.IHost;
 import org.eclipse.rse.core.model.ISystemRegistry;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
+import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -27,10 +30,11 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 
 public class RPITab extends AbstractLaunchConfigurationTab {
-	private static final int DEFAULT_DEBUG_POST = 4000;
+	
 	private Composite control;
 	private ComboViewer rpiCombo;
 	private Text debugPortTxt;
+	private Text javaCmdTxt;
 	
 	@Override
 	public Control getControl() {
@@ -62,14 +66,25 @@ public class RPITab extends AbstractLaunchConfigurationTab {
 			}
 		});
 		
+		Label cmdLabel = new Label(control, SWT.LEFT);
+		cmdLabel.setText("Java command:");
+		javaCmdTxt = new Text(control, SWT.BORDER);
+		javaCmdTxt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		
 		Label portLabel = new Label(control, SWT.LEFT);
 		portLabel.setText("Debug port:");
-		debugPortTxt = new Text(control, SWT.NONE);
+		debugPortTxt = new Text(control, SWT.BORDER);
+		debugPortTxt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		
+		TextModifyListener modifyListener = new TextModifyListener();
+		javaCmdTxt.addModifyListener(modifyListener);
+		debugPortTxt.addModifyListener(modifyListener);
 	}
 
 	@Override
 	public void setDefaults(ILaunchConfigurationWorkingCopy configuration) {
-		configuration.setAttribute("rpiSystemDebugPort", DEFAULT_DEBUG_POST);
+		configuration.setAttribute(RPIConfigurationAttributes.DEBUG_PORT, RPIConfigurationAttributes.DEFAULT_DEBUG_POST);
+		configuration.setAttribute(RPIConfigurationAttributes.JAVA_CMD, RPIConfigurationAttributes.DEFAULT_JAVA_CMD);
 		configuration.setAttribute(IJavaLaunchConfigurationConstants.ATTR_VM_CONNECTOR, IJavaLaunchConfigurationConstants.ID_SOCKET_ATTACH_VM_CONNECTOR);
 	}
 
@@ -80,9 +95,9 @@ public class RPITab extends AbstractLaunchConfigurationTab {
 		rpiCombo.setInput(hosts);
 		
 		try {
-			String cfgSystem = configuration.getAttribute("rpiSystem", "");
-			String cfgSystemProfileName = configuration.getAttribute("rpiSystemProfile", "");
-			int cfgSystemDebugPort = configuration.getAttribute("rpiSystemDebugPort", DEFAULT_DEBUG_POST);
+			String cfgSystem = configuration.getAttribute(RPIConfigurationAttributes.SYSTEM, "");
+			String cfgSystemProfileName = configuration.getAttribute(RPIConfigurationAttributes.SYSTEM_PROFILE, "");
+			int cfgSystemDebugPort = configuration.getAttribute(RPIConfigurationAttributes.DEBUG_PORT, RPIConfigurationAttributes.DEFAULT_DEBUG_POST);
 			for (IHost host : hosts) {
 				if (host.getName().equals(cfgSystem) && host.getSystemProfileName().equals(cfgSystemProfileName)) {
 					rpiCombo.setSelection(new StructuredSelection(host));
@@ -90,6 +105,7 @@ public class RPITab extends AbstractLaunchConfigurationTab {
 				}
 			}
 			debugPortTxt.setText(String.valueOf(cfgSystemDebugPort));
+			javaCmdTxt.setText(configuration.getAttribute(RPIConfigurationAttributes.JAVA_CMD, RPIConfigurationAttributes.DEFAULT_JAVA_CMD));
 		} catch (CoreException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -102,9 +118,10 @@ public class RPITab extends AbstractLaunchConfigurationTab {
 		IStructuredSelection selection = (IStructuredSelection) rpiCombo.getSelection();
 		if (!selection.isEmpty()) {
 			IHost host = (IHost) selection.getFirstElement();
-			configuration.setAttribute("rpiSystem", host.getName());
-			configuration.setAttribute("rpiSystemProfile", host.getSystemProfileName());
-			configuration.setAttribute("rpiSystemDebugPort", Integer.valueOf(debugPortTxt.getText()));
+			configuration.setAttribute(RPIConfigurationAttributes.SYSTEM, host.getName());
+			configuration.setAttribute(RPIConfigurationAttributes.SYSTEM_PROFILE, host.getSystemProfileName());
+			configuration.setAttribute(RPIConfigurationAttributes.DEBUG_PORT, Integer.valueOf(debugPortTxt.getText()));
+			configuration.setAttribute(RPIConfigurationAttributes.JAVA_CMD, javaCmdTxt.getText());
 			
 			Map<String, String> argMap = new HashMap<String, String>();
 	        argMap.put("hostname", host.getName());
@@ -116,6 +133,15 @@ public class RPITab extends AbstractLaunchConfigurationTab {
 	@Override
 	public String getName() {
 		return "Raspberry PI";
+	}
+	
+	private class TextModifyListener implements ModifyListener {
+		@Override
+		public void modifyText(ModifyEvent event) {
+			setDirty(true);
+			updateLaunchConfigurationDialog();
+		}
+		
 	}
 
 }

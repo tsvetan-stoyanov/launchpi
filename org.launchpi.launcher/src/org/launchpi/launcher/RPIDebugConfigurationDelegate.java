@@ -9,8 +9,6 @@ import org.eclipse.jdt.internal.launching.JavaRemoteApplicationLaunchConfigurati
 
 public class RPIDebugConfigurationDelegate extends JavaRemoteApplicationLaunchConfigurationDelegate{
 
-	
-	//IJavaLaunchConfigurationConstants.ID_SOCKET_ATTACH_VM_CONNECTOR
 	@Override
 	public void launch(ILaunchConfiguration configuration, String mode,
 			ILaunch launch, IProgressMonitor monitor) throws CoreException {
@@ -23,7 +21,6 @@ public class RPIDebugConfigurationDelegate extends JavaRemoteApplicationLaunchCo
 				Thread.sleep(3000);
 				monitor.worked(1);
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			super.launch(configuration, mode, launch, monitor);
