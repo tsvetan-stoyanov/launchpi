@@ -8,8 +8,8 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<modules>
-		<module>org.launchpi.feature</module>
 		<module>org.launchpi.launcher</module>
+		<module>org.launchpi.feature</module>
 		<module>org.launchpi.us</module>
 	</modules>
 
@@ -28,6 +28,16 @@
 
 	<build>
 		<plugins>
+			<plugin>
+  				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>2.1</version>
+				<configuration>
+				 	<source>1.6</source>
+					<target>1.6</target>
+				</configuration>
+			</plugin>
+			
 			<plugin>
 				<groupId>org.eclipse.tycho</groupId>
 				<artifactId>tycho-maven-plugin</artifactId>

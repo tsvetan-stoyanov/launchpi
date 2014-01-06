@@ -2,9 +2,12 @@ package org.launchpi.launcher;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.jdt.launching.AbstractJavaLaunchConfigurationDelegate;
+import org.eclipse.ui.statushandlers.StatusManager;
 
 
 public class RPILaunchConfigurationDelegate extends AbstractJavaLaunchConfigurationDelegate {
@@ -17,7 +20,8 @@ public class RPILaunchConfigurationDelegate extends AbstractJavaLaunchConfigurat
 			RemoteProcess remoteProcess = RemoteProcessFactory.createRemoteProcess(launch, this, configuration, mode, monitor);
 			launch.addProcess(remoteProcess);
 		} catch (Exception e) {
-			e.printStackTrace();
+			StatusManager.getManager().handle(
+					new Status(IStatus.ERROR, "org.launchpi.launcher", "Cannot start launch configuration", e), StatusManager.LOG);
 		}
 	}	
 }

@@ -51,7 +51,8 @@ public class RemoteProcessFactory {
 	}
 	
 	private static String buildCommandLine(AbstractJavaLaunchConfigurationDelegate delegate, ILaunchConfiguration configuration, String mode) throws CoreException {
-		String javaCmd = configuration.getAttribute(RPIConfigurationAttributes.JAVA_CMD,  RPIConfigurationAttributes.DEFAULT_JAVA_CMD);
+		boolean runAsRoot = configuration.getAttribute(RPIConfigurationAttributes.RUN_AS_ROOT,  RPIConfigurationAttributes.DEFAULT_RUN_AS_ROOT);
+		String javaCmd = runAsRoot ? "sudo java" : "java";
 		StringBuilder cmdBuf = new StringBuilder(javaCmd);
 		if (ILaunchManager.DEBUG_MODE.equals(mode)) {
 			int debugPort = configuration.getAttribute(RPIConfigurationAttributes.DEBUG_PORT, RPIConfigurationAttributes.DEFAULT_DEBUG_POST);

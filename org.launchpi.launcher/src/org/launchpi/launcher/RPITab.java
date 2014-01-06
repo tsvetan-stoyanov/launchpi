@@ -22,8 +22,11 @@ import org.eclipse.rse.core.model.ISystemRegistry;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
@@ -34,7 +37,7 @@ public class RPITab extends AbstractLaunchConfigurationTab {
 	private Composite control;
 	private ComboViewer rpiCombo;
 	private Text debugPortTxt;
-	private Text javaCmdTxt;
+	private Button runAsRootBtn;
 	
 	@Override
 	public Control getControl() {
@@ -66,25 +69,35 @@ public class RPITab extends AbstractLaunchConfigurationTab {
 			}
 		});
 		
-		Label cmdLabel = new Label(control, SWT.LEFT);
-		cmdLabel.setText("Java command:");
-		javaCmdTxt = new Text(control, SWT.BORDER);
-		javaCmdTxt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		
 		Label portLabel = new Label(control, SWT.LEFT);
 		portLabel.setText("Debug port:");
 		debugPortTxt = new Text(control, SWT.BORDER);
 		debugPortTxt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		
-		TextModifyListener modifyListener = new TextModifyListener();
-		javaCmdTxt.addModifyListener(modifyListener);
-		debugPortTxt.addModifyListener(modifyListener);
+		Label cmdLabel = new Label(control, SWT.LEFT);
+		cmdLabel.setText("Run java as root:");
+		runAsRootBtn = new Button(control, SWT.CHECK);
+		//javaCmdTxt = new Text(control, SWT.BORDER);
+		//javaCmdTxt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+
+		
+		runAsRootBtn.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(SelectionEvent e) {
+				configurationChanged();
+			}
+		});
+		debugPortTxt.addModifyListener(new ModifyListener() {
+			public void modifyText(ModifyEvent e) {
+				configurationChanged();
+			}
+		});
 	}
 
 	@Override
 	public void setDefaults(ILaunchConfigurationWorkingCopy configuration) {
 		configuration.setAttribute(RPIConfigurationAttributes.DEBUG_PORT, RPIConfigurationAttributes.DEFAULT_DEBUG_POST);
-		configuration.setAttribute(RPIConfigurationAttributes.JAVA_CMD, RPIConfigurationAttributes.DEFAULT_JAVA_CMD);
+		configuration.setAttribute(RPIConfigurationAttributes.RUN_AS_ROOT, RPIConfigurationAttributes.DEFAULT_RUN_AS_ROOT);
 		configuration.setAttribute(IJavaLaunchConfigurationConstants.ATTR_VM_CONNECTOR, IJavaLaunchConfigurationConstants.ID_SOCKET_ATTACH_VM_CONNECTOR);
 	}
 
@@ -105,7 +118,7 @@ public class RPITab extends AbstractLaunchConfigurationTab {
 				}
 			}
 			debugPortTxt.setText(String.valueOf(cfgSystemDebugPort));
-			javaCmdTxt.setText(configuration.getAttribute(RPIConfigurationAttributes.JAVA_CMD, RPIConfigurationAttributes.DEFAULT_JAVA_CMD));
+			runAsRootBtn.setSelection(configuration.getAttribute(RPIConfigurationAttributes.RUN_AS_ROOT, RPIConfigurationAttributes.DEFAULT_RUN_AS_ROOT));
 		} catch (CoreException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -121,7 +134,7 @@ public class RPITab extends AbstractLaunchConfigurationTab {
 			configuration.setAttribute(RPIConfigurationAttributes.SYSTEM, host.getName());
 			configuration.setAttribute(RPIConfigurationAttributes.SYSTEM_PROFILE, host.getSystemProfileName());
 			configuration.setAttribute(RPIConfigurationAttributes.DEBUG_PORT, Integer.valueOf(debugPortTxt.getText()));
-			configuration.setAttribute(RPIConfigurationAttributes.JAVA_CMD, javaCmdTxt.getText());
+			configuration.setAttribute(RPIConfigurationAttributes.RUN_AS_ROOT, runAsRootBtn.getSelection());
 			
 			Map<String, String> argMap = new HashMap<String, String>();
 	        argMap.put("hostname", host.getName());
@@ -135,13 +148,9 @@ public class RPITab extends AbstractLaunchConfigurationTab {
 		return "Raspberry PI";
 	}
 	
-	private class TextModifyListener implements ModifyListener {
-		@Override
-		public void modifyText(ModifyEvent event) {
-			setDirty(true);
-			updateLaunchConfigurationDialog();
-		}
-		
+	private void configurationChanged() {
+		setDirty(true);
+		updateLaunchConfigurationDialog();
 	}
 
 }
