@@ -77,8 +77,6 @@ public class RemoteProcessFactory {
 			cmdBuf.append(" -Xdebug -Xrunjdwp:transport=dt_socket,address=").append(debugPort).append(",server=y,suspend=y");
 		}
 		
-		cmdBuf.append(delegate.getVMArguments(configuration));
-		
 		for (String arg : DebugPlugin.parseArguments(delegate.getVMArguments(configuration))) {
 			cmdBuf.append(' ').append(arg.trim());
 		}
@@ -88,8 +86,6 @@ public class RemoteProcessFactory {
 		for (String arg : DebugPlugin.parseArguments(delegate.getProgramArguments(configuration))) {
 			cmdBuf.append(' ').append(arg.trim());
 		}
-		
-		cmdBuf.append(delegate.getProgramArguments(configuration));
 
 		cmdBuf.append(" ; exit");
 		return cmdBuf.toString();
