@@ -1,6 +1,9 @@
 package org.launchpi.launcher;
 
 
+import java.util.Map;
+import java.util.Map.Entry;
+
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -50,14 +53,31 @@ public class RemoteProcessFactory {
 
 	}
 	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private static String buildCommandLine(AbstractJavaLaunchConfigurationDelegate delegate, ILaunchConfiguration configuration, String mode) throws CoreException {
+		StringBuilder cmdBuf = new StringBuilder();
+		
 		boolean runAsRoot = configuration.getAttribute(RPIConfigurationAttributes.RUN_AS_ROOT,  RPIConfigurationAttributes.DEFAULT_RUN_AS_ROOT);
-		String javaCmd = runAsRoot ? "sudo java" : "java";
-		StringBuilder cmdBuf = new StringBuilder(javaCmd);
+		if (runAsRoot) {
+			cmdBuf.append("sudo ");
+		}
+		
+		Map<String, String> env = configuration.getAttribute(ILaunchManager.ATTR_ENVIRONMENT_VARIABLES, (Map) null);
+		if (env != null) {
+			for (Entry<String, String> entry : env.entrySet()) {
+				String value = entry.getValue().replaceAll("\"", "\\\"");
+				cmdBuf.append(entry.getKey()).append("=\"").append(value).append("\" ");
+			}
+		}
+		
+		cmdBuf.append("java ");
+		
 		if (ILaunchManager.DEBUG_MODE.equals(mode)) {
 			int debugPort = configuration.getAttribute(RPIConfigurationAttributes.DEBUG_PORT, RPIConfigurationAttributes.DEFAULT_DEBUG_POST);
 			cmdBuf.append(" -Xdebug -Xrunjdwp:transport=dt_socket,address=").append(debugPort).append(",server=y,suspend=y");
 		}
+		
+		cmdBuf.append(delegate.getVMArguments(configuration));
 		
 		for (String arg : DebugPlugin.parseArguments(delegate.getVMArguments(configuration))) {
 			cmdBuf.append(' ').append(arg.trim());
@@ -68,6 +88,8 @@ public class RemoteProcessFactory {
 		for (String arg : DebugPlugin.parseArguments(delegate.getProgramArguments(configuration))) {
 			cmdBuf.append(' ').append(arg.trim());
 		}
+		
+		cmdBuf.append(delegate.getProgramArguments(configuration));
 
 		cmdBuf.append(" ; exit");
 		return cmdBuf.toString();
