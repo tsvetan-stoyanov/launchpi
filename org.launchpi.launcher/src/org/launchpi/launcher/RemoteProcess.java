@@ -72,7 +72,7 @@ public class RemoteProcess implements IProcess, ISystemResourceChangeListener{
 
 	@Override
 	public String getLabel() {
-		return "Raspberry PI Process";
+		return "Raspberry PI Process"; //$NON-NLS-1$
 	}
 
 	@Override

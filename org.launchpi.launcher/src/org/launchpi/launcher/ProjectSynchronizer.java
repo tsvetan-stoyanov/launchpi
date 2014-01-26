@@ -16,10 +16,11 @@ import org.eclipse.rse.services.clientserver.messages.SystemElementNotFoundExcep
 import org.eclipse.rse.services.clientserver.messages.SystemMessageException;
 import org.eclipse.rse.subsystems.files.core.servicesubsystem.IFileServiceSubSystem;
 import org.eclipse.rse.subsystems.files.core.subsystems.IRemoteFile;
+import org.launchpi.launcher.i18n.Messages;
 
 public class ProjectSynchronizer {
 
-	public static final String REMOTE_FOLDER_NAME = ".launchpi_projects";
+	public static final String REMOTE_FOLDER_NAME = ".launchpi_projects"; //$NON-NLS-1$
 	
 	private IProject project;
 	private IHost host;
@@ -32,7 +33,7 @@ public class ProjectSynchronizer {
 	public void synchronize(IProgressMonitor monitor) throws Exception{
 		IFileServiceSubSystem fileServiceSubsystem = null;
 		try {
-			monitor.subTask("Synchronizing project classpath");
+			monitor.subTask(Messages.Progress_Synchronizing_CP);
 			fileServiceSubsystem = getFileServiceSubsystem();
 			IJavaProject javaProject = JavaCore.create(project);
 			
@@ -45,8 +46,8 @@ public class ProjectSynchronizer {
 				
 			}
 
-			IRemoteFile remoteBinFolder = fileServiceSubsystem.getRemoteFileObject(baseFolder, "bin", monitor);
-			IRemoteFile remoteLibFolder = fileServiceSubsystem.getRemoteFileObject(baseFolder, "lib", monitor);
+			IRemoteFile remoteBinFolder = fileServiceSubsystem.getRemoteFileObject(baseFolder, "bin", monitor); //$NON-NLS-1$
+			IRemoteFile remoteLibFolder = fileServiceSubsystem.getRemoteFileObject(baseFolder, "lib", monitor); //$NON-NLS-1$
 			fileServiceSubsystem.createFolders(remoteBinFolder, monitor);
 			fileServiceSubsystem.createFolders(remoteLibFolder, monitor);
 
@@ -99,7 +100,7 @@ public class ProjectSynchronizer {
 				return (IFileServiceSubSystem) subSystem;
 			}
 		}
-		throw new IllegalStateException("File service not found for host " + host.getName());
+		throw new IllegalStateException(Messages.File_Service_Not_Found + host.getName());
 	}
 	
 }

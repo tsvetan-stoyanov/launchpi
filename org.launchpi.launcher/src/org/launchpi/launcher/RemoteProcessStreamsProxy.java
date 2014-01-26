@@ -86,7 +86,7 @@ public class RemoteProcessStreamsProxy implements IStreamsProxy2{
 					continue;
 				}
 				buf.append(lineContent);
-				buf.append("\r\n");
+				buf.append("\r\n"); //$NON-NLS-1$
 			}
 			
 			String newContent = buf.toString();

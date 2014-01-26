@@ -24,18 +24,22 @@ import org.eclipse.rse.shells.ui.RemoteCommandHelpers;
 import org.eclipse.rse.subsystems.files.core.servicesubsystem.IFileServiceSubSystem;
 import org.eclipse.rse.subsystems.shells.core.subsystems.IRemoteCmdSubSystem;
 import org.eclipse.rse.subsystems.shells.core.subsystems.servicesubsystem.IShellServiceSubSystem;
+import org.launchpi.launcher.i18n.Messages;
 
 public class RemoteProcessFactory {
 
 	
 	public static RemoteProcess createRemoteProcess(ILaunch launch, AbstractJavaLaunchConfigurationDelegate delegate, ILaunchConfiguration configuration, String mode, IProgressMonitor monitor) throws Exception{
-		String cfgSystem = configuration.getAttribute(RPIConfigurationAttributes.SYSTEM, "");
-		String cfgSystemProfileName = configuration.getAttribute(RPIConfigurationAttributes.SYSTEM_PROFILE, "");
+		String cfgSystem = configuration.getAttribute(RPIConfigurationAttributes.SYSTEM, ""); //$NON-NLS-1$
+		String cfgSystemProfileName = configuration.getAttribute(RPIConfigurationAttributes.SYSTEM_PROFILE, ""); //$NON-NLS-1$
 		
 		ISystemRegistry registry = RSECorePlugin.getTheSystemRegistry();
 		IHost host = registry.getHost(registry.getSystemProfile(cfgSystemProfileName), cfgSystem);
 		
-		monitor.subTask("Initializing connection to remote host");
+		if (host == null) {
+			throw new IllegalStateException(Messages.Host_Not_Found);
+		}
+		monitor.subTask(Messages.Progress_Init_Connection);
 		IRemoteCmdSubSystem ss = RemoteCommandHelpers.getCmdSubSystem(host);
 		ss.connect(monitor, false);
 		monitor.worked(1);
@@ -46,8 +50,8 @@ public class RemoteProcessFactory {
 		synchronizer.synchronize(monitor);
 
 		String cmd = buildCommandLine(delegate, configuration, mode);
-		monitor.subTask("Launching remote java process");
-		IHostShell shell = shellService.runCommand(getFileService(host).getUserHome().getAbsolutePath() + "/" + ProjectSynchronizer.REMOTE_FOLDER_NAME, cmd, new String[0], new NullProgressMonitor());
+		monitor.subTask(Messages.Progress_Launching_Java);
+		IHostShell shell = shellService.runCommand(getFileService(host).getUserHome().getAbsolutePath() + "/" + ProjectSynchronizer.REMOTE_FOLDER_NAME, cmd, new String[0], new NullProgressMonitor()); //$NON-NLS-1$
 		monitor.worked(1);
 		return new RemoteProcess(launch, shell, ss);
 
@@ -59,35 +63,35 @@ public class RemoteProcessFactory {
 		
 		boolean runAsRoot = configuration.getAttribute(RPIConfigurationAttributes.RUN_AS_ROOT,  RPIConfigurationAttributes.DEFAULT_RUN_AS_ROOT);
 		if (runAsRoot) {
-			cmdBuf.append("sudo ");
+			cmdBuf.append("sudo "); //$NON-NLS-1$
 		}
 		
 		Map<String, String> env = configuration.getAttribute(ILaunchManager.ATTR_ENVIRONMENT_VARIABLES, (Map) null);
 		if (env != null) {
 			for (Entry<String, String> entry : env.entrySet()) {
-				String value = entry.getValue().replaceAll("\"", "\\\"");
-				cmdBuf.append(entry.getKey()).append("=\"").append(value).append("\" ");
+				String value = entry.getValue().replaceAll("\"", "\\\""); //$NON-NLS-1$ //$NON-NLS-2$
+				cmdBuf.append(entry.getKey()).append("=\"").append(value).append("\" "); //$NON-NLS-1$ //$NON-NLS-2$
 			}
 		}
 		
-		cmdBuf.append("java ");
+		cmdBuf.append("java "); //$NON-NLS-1$
 		
 		if (ILaunchManager.DEBUG_MODE.equals(mode)) {
 			int debugPort = configuration.getAttribute(RPIConfigurationAttributes.DEBUG_PORT, RPIConfigurationAttributes.DEFAULT_DEBUG_POST);
-			cmdBuf.append(" -Xdebug -Xrunjdwp:transport=dt_socket,address=").append(debugPort).append(",server=y,suspend=y");
+			cmdBuf.append(" -Xdebug -Xrunjdwp:transport=dt_socket,address=").append(debugPort).append(",server=y,suspend=y"); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 		
 		for (String arg : DebugPlugin.parseArguments(delegate.getVMArguments(configuration))) {
 			cmdBuf.append(' ').append(arg.trim());
 		}
-		cmdBuf.append(" -cp bin:lib/'*'");
+		cmdBuf.append(" -cp bin:lib/'*'"); //$NON-NLS-1$
 		cmdBuf.append(' ').append(delegate.getMainTypeName(configuration));
 		
 		for (String arg : DebugPlugin.parseArguments(delegate.getProgramArguments(configuration))) {
 			cmdBuf.append(' ').append(arg.trim());
 		}
 
-		cmdBuf.append(" ; exit");
+		cmdBuf.append(" ; exit"); //$NON-NLS-1$
 		return cmdBuf.toString();
 		
 	}
@@ -98,7 +102,7 @@ public class RemoteProcessFactory {
 				return ((IShellServiceSubSystem) subSystem).getShellService();
 			}
 		}
-		throw new IllegalStateException("Cannot find shell service for host " + host.getName());
+		throw new IllegalStateException(Messages.Shell_Service_Not_Found + host.getName());
 	}
 	
 	private static IFileService getFileService(IHost host) throws Exception {
@@ -108,6 +112,6 @@ public class RemoteProcessFactory {
 				return ((IFileServiceSubSystem) subSystem).getFileService();
 			}
 		}
-		throw new IllegalStateException("File service not found for host " + host.getName());
+		throw new IllegalStateException(Messages.File_Service_Not_Found + host.getName());
 	}
 }
