@@ -227,6 +227,7 @@
       <import plugin="org.eclipse.rse.subsystems.files.ssh" version="2.1.300" match="greaterOrEqual"/>
       <import plugin="org.apache.commons.io"/>
       <import plugin="org.eclipse.rse.subsystems.shells.ssh" version="2.1.400" match="greaterOrEqual"/>
+      <import plugin="org.apache.commons.compress"/>
    </requires>
 
    <plugin

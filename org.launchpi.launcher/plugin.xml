@@ -30,5 +30,13 @@
             type="org.launchpi.launcher">
       </launchDelegate>
    </extension>
+   <extension
+         point="org.eclipse.debug.ui.launchConfigurationTypeImages">
+      <launchConfigurationTypeImage
+            configTypeID="org.launchpi.launcher"
+            icon="images/launchpi.png"
+            id="org.launchpi.launcher.launchConfigurationTypeImage">
+      </launchConfigurationTypeImage>
+   </extension>
 
 </plugin>

@@ -1,105 +1,133 @@
 package org.launchpi.launcher;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Collection;
+import java.util.LinkedList;
 
+import org.apache.commons.compress.archivers.ArchiveException;
+import org.apache.commons.compress.archivers.ArchiveOutputStream;
+import org.apache.commons.compress.archivers.ArchiveStreamFactory;
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.utils.IOUtils;
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
-import org.eclipse.jdt.core.JavaModelException;
-import org.eclipse.rse.core.model.IHost;
-import org.eclipse.rse.core.subsystems.ISubSystem;
-import org.eclipse.rse.services.clientserver.messages.SystemElementNotFoundException;
-import org.eclipse.rse.services.clientserver.messages.SystemMessageException;
 import org.eclipse.rse.subsystems.files.core.servicesubsystem.IFileServiceSubSystem;
 import org.eclipse.rse.subsystems.files.core.subsystems.IRemoteFile;
+import org.launchpi.launcher.i18n.Messages;
 
 public class ProjectSynchronizer {
 
-	public static final String REMOTE_FOLDER_NAME = ".launchpi_projects";
+	public static final String REMOTE_FOLDER_NAME = ".launchpi_projects"; //$NON-NLS-1$
 	
 	private IProject project;
-	private IHost host;
 
-	public ProjectSynchronizer(IProject project, IHost host) {
+	private IFileServiceSubSystem fileServiceSubsystem;
+
+	private String baseFolderName;
+
+	public ProjectSynchronizer(IProject project, String baseFolderName, IFileServiceSubSystem fileServiceSubsystem) {
 		this.project = project;
-		this.host = host;
+		this.baseFolderName = baseFolderName;
+		this.fileServiceSubsystem = fileServiceSubsystem;
 	}
 	
 	public void synchronize(IProgressMonitor monitor) throws Exception{
-		IFileServiceSubSystem fileServiceSubsystem = null;
+		monitor.subTask(Messages.Progress_Synchronizing_CP);
+		IJavaProject javaProject = JavaCore.create(project);
+		
+		IRemoteFile baseFolder = fileServiceSubsystem.getRemoteFileObject(baseFolderName, monitor);
+		if (baseFolder.exists()) {
+			fileServiceSubsystem.delete(baseFolder, monitor);
+		}
+		fileServiceSubsystem.createFolders(baseFolder, monitor);
+
+		ClasspathResolver resolver = new ClasspathResolver(javaProject);
+		Collection<File> classpathEntries = resolver.resolve();
+		File classpathArchive = createClasspathArchive(classpathEntries);
+		
+		IRemoteFile remoteEntry = fileServiceSubsystem.getRemoteFileObject(baseFolder, classpathArchive.getName(), monitor);
+		fileServiceSubsystem.upload(classpathArchive.getCanonicalPath(), remoteEntry, null, monitor);
+		classpathArchive.delete();
+	}
+	
+	private File createClasspathArchive(Collection<File> classpathEntries) throws IOException {
+		File archiveFile = new File(System.getProperty("java.io.tmpdir"), project.getName() + ".tar"); //$NON-NLS-1$ //$NON-NLS-2$
+		if (archiveFile.exists()) {
+			archiveFile.delete();
+		}
+		
+		FileOutputStream fos = null;
+		ArchiveOutputStream os = null;
 		try {
-			monitor.subTask("Synchronizing project classpath");
-			fileServiceSubsystem = getFileServiceSubsystem();
-			IJavaProject javaProject = JavaCore.create(project);
-			
-			String userHome = fileServiceSubsystem.getFileService().getUserHome().getAbsolutePath();
-			IRemoteFile remoteUserHome = fileServiceSubsystem.getRemoteFileObject(userHome, monitor);
-			IRemoteFile baseFolder = fileServiceSubsystem.getRemoteFileObject(remoteUserHome, REMOTE_FOLDER_NAME, monitor);
-			try {
-				fileServiceSubsystem.delete(baseFolder, monitor);
-			} catch (SystemElementNotFoundException ex) {
-				
-			}
-
-			IRemoteFile remoteBinFolder = fileServiceSubsystem.getRemoteFileObject(baseFolder, "bin", monitor);
-			IRemoteFile remoteLibFolder = fileServiceSubsystem.getRemoteFileObject(baseFolder, "lib", monitor);
-			fileServiceSubsystem.createFolders(remoteBinFolder, monitor);
-			fileServiceSubsystem.createFolders(remoteLibFolder, monitor);
-
-			synchronizeClasses(fileServiceSubsystem, javaProject, remoteBinFolder, monitor);
-			synchronizeLibraries(fileServiceSubsystem, javaProject, remoteLibFolder, monitor);
-		} finally {
-			if (fileServiceSubsystem != null) {
-				fileServiceSubsystem.uninitializeSubSystem(monitor);
-			}
-		}
-	}
-	
-	private void synchronizeClasses(IFileServiceSubSystem fss, IJavaProject javaProject, IRemoteFile remoteFolder, IProgressMonitor monitor) throws JavaModelException, SystemMessageException, IOException {
-		IPath outputLocation = javaProject.getOutputLocation();
-		if (outputLocation != null) {
-			File hostFile = javaProject.getProject().getWorkspace().getRoot().getFile(outputLocation).getLocation().toFile();
-			RemoteFileUtils.copy(fss, hostFile, remoteFolder, monitor);
-		}
-
-		for (IClasspathEntry entry : javaProject.getResolvedClasspath(true)) {
-			if (entry.getEntryKind() == IClasspathEntry.CPE_SOURCE) {
-				outputLocation = entry.getOutputLocation();
-				if (outputLocation != null) {
-					File hostFile = javaProject.getProject().getWorkspace().getRoot().getFile(outputLocation).getLocation().toFile();
-					RemoteFileUtils.copy(fss, hostFile, remoteFolder, monitor);
+			fos = new FileOutputStream(archiveFile);
+			os = new ArchiveStreamFactory().createArchiveOutputStream(ArchiveStreamFactory.TAR, fos);
+			LinkedList<String> pathElements = new LinkedList<String>();
+			for (File f : classpathEntries) {
+				if (f.isFile()) {
+					pathElements.addLast("lib"); //$NON-NLS-1$
+					writeClasspathEntry(pathElements, f, os);
+				} else {
+					pathElements.addLast("classes"); //$NON-NLS-1$
+					for (File child : f.listFiles()) {
+						writeClasspathEntry(pathElements, child, os);
+					}
 				}
+				pathElements.removeLast();
 			}
-		}
-	}
-
-	private void synchronizeLibraries(IFileServiceSubSystem fss, IJavaProject javaProject, IRemoteFile remoteLibFolder, IProgressMonitor monitor) throws JavaModelException, SystemMessageException, IOException {
-		for (IClasspathEntry entry: javaProject.getRawClasspath()) {
-			if (entry.getEntryKind() != IClasspathEntry.CPE_LIBRARY) {
-				continue;
+			return archiveFile;
+		} catch (ArchiveException e) {
+			throw new IOException("Failed to create classpath archive", e); //$NON-NLS-1$
+		}finally {
+			if (os != null) {
+				os.close();
 			}
-			
-			entry = JavaCore.getResolvedClasspathEntry(entry);
-			
-			File entryFile = javaProject.getProject().getWorkspace().getRoot().getFile(entry.getPath()).getLocation().toFile();
-			if (!entryFile.isDirectory()) {
-				IRemoteFile remoteEntry = fss.getRemoteFileObject(remoteLibFolder, entryFile.getName(), monitor);
-				fss.upload(entryFile.getCanonicalPath(), remoteEntry, null, monitor);
+			if (fos != null) {
+				fos.close();
 			}
 		}
 	}
 	
-	private IFileServiceSubSystem getFileServiceSubsystem() {
-		for (ISubSystem subSystem : host.getSubSystems()) {
-			if (subSystem instanceof IFileServiceSubSystem) {
-				return (IFileServiceSubSystem) subSystem;
+	private void writeClasspathEntry(LinkedList<String> pathElements, File entry, ArchiveOutputStream os) throws IOException {
+		if (entry.isFile()) {
+			os.putArchiveEntry(new TarArchiveEntry(entry, getPath(pathElements) + "/" + entry.getName())); //$NON-NLS-1$
+			copy(entry, os);
+			os.closeArchiveEntry();
+		} else {
+			pathElements.addLast(entry.getName());
+			for (File child : entry.listFiles()) {
+				writeClasspathEntry(pathElements, child, os);
+			}
+			pathElements.removeLast();
+		}
+	}
+	
+	private void copy(File entry, OutputStream out) throws IOException {
+		FileInputStream in = null;
+		try {
+			in = new FileInputStream(entry);
+			IOUtils.copy(in, out);
+		}finally {
+			if (in != null) {
+				in.close();
 			}
 		}
-		throw new IllegalStateException("File service not found for host " + host.getName());
+	}
+	
+	private static String getPath(LinkedList<String> pathElements) {
+		StringBuilder buf = new StringBuilder();
+		for (int i = 0; i < pathElements.size(); i++) {
+			if (i != 0) {
+				buf.append('/');
+			}
+			buf.append(pathElements.get(i));
+		}
+		return buf.toString();
 	}
 	
 }
