@@ -8,6 +8,7 @@ import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.jdt.internal.launching.JavaRemoteApplicationLaunchConfigurationDelegate;
 import org.launchpi.launcher.i18n.Messages;
 
+@SuppressWarnings("restriction")
 public class RPIDebugConfigurationDelegate extends JavaRemoteApplicationLaunchConfigurationDelegate{
 
 	@Override
@@ -15,7 +16,7 @@ public class RPIDebugConfigurationDelegate extends JavaRemoteApplicationLaunchCo
 			ILaunch launch, IProgressMonitor monitor) throws CoreException {
 
 		try {
-			RemoteProcess remoteProcess = RemoteProcessFactory.createRemoteProcess(launch, this, configuration, mode, monitor);
+			RemoteProcess remoteProcess = new RemoteProcessFactory(launch, this, configuration, mode).createRemoteProcess(monitor);
 			launch.addProcess(remoteProcess);
 			monitor.subTask(Messages.Progress_Waiting_Debug_Connection);
 			Thread.sleep(3000);

@@ -44,6 +44,7 @@ public class RPITab extends AbstractLaunchConfigurationTab {
 	private Composite control;
 	private ComboViewer rpiCombo;
 	private Text debugPortTxt;
+	private Text displayTxt;
 	private Button runAsRootBtn;
 	private Button addHostBtn;
 	
@@ -83,6 +84,11 @@ public class RPITab extends AbstractLaunchConfigurationTab {
 		debugPortTxt = new Text(control, SWT.BORDER);
 		debugPortTxt.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
 		
+		Label displayLabel = new Label(control, SWT.LEFT);
+		displayLabel.setText(Messages.Display);
+		displayTxt = new Text(control, SWT.BORDER);
+		displayTxt.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
+		
 		Label cmdLabel = new Label(control, SWT.LEFT);
 		cmdLabel.setText(Messages.Run_As_Root);
 		runAsRootBtn = new Button(control, SWT.CHECK);
@@ -97,6 +103,11 @@ public class RPITab extends AbstractLaunchConfigurationTab {
 				configurationChanged();
 			}
 		});
+		displayTxt.addModifyListener(new ModifyListener() {
+			public void modifyText(ModifyEvent e) {
+				configurationChanged();
+			}
+		});
 	}
 
 	@Override
@@ -104,6 +115,7 @@ public class RPITab extends AbstractLaunchConfigurationTab {
 		configuration.setAttribute(RPIConfigurationAttributes.DEBUG_PORT, RPIConfigurationAttributes.DEFAULT_DEBUG_POST);
 		configuration.setAttribute(RPIConfigurationAttributes.RUN_AS_ROOT, RPIConfigurationAttributes.DEFAULT_RUN_AS_ROOT);
 		configuration.setAttribute(IJavaLaunchConfigurationConstants.ATTR_VM_CONNECTOR, IJavaLaunchConfigurationConstants.ID_SOCKET_ATTACH_VM_CONNECTOR);
+		configuration.setAttribute(RPIConfigurationAttributes.DISPLAY, RPIConfigurationAttributes.DEFAULT_DISPLAY);
 	}
 
 	@Override
@@ -116,9 +128,11 @@ public class RPITab extends AbstractLaunchConfigurationTab {
 			int cfgSystemDebugPort = configuration.getAttribute(RPIConfigurationAttributes.DEBUG_PORT, RPIConfigurationAttributes.DEFAULT_DEBUG_POST);
 			boolean runAsRoot = configuration.getAttribute(RPIConfigurationAttributes.RUN_AS_ROOT, RPIConfigurationAttributes.DEFAULT_RUN_AS_ROOT);
 			IHost cfgHost = getHost(hosts, cfgSystemProfileName, cfgSystem);
+			String display = configuration.getAttribute(RPIConfigurationAttributes.DISPLAY, RPIConfigurationAttributes.DEFAULT_DISPLAY);
 			
 			updateRPICombo(hosts, cfgHost);
 			debugPortTxt.setText(String.valueOf(cfgSystemDebugPort));
+			displayTxt.setText(display);
 			runAsRootBtn.setSelection(runAsRoot);
 		} catch (CoreException e) {
 			LaunchPlugin.reportError(Messages.Start_Failed, e);
@@ -144,6 +158,7 @@ public class RPITab extends AbstractLaunchConfigurationTab {
 		}
 
 		configuration.setAttribute(RPIConfigurationAttributes.RUN_AS_ROOT, runAsRootBtn.getSelection());
+		configuration.setAttribute(RPIConfigurationAttributes.DISPLAY, displayTxt.getText().trim());
 		
 		Map<String, String> argMap = new HashMap<String, String>();
         argMap.put("hostname", hostName); //$NON-NLS-1$
@@ -212,7 +227,7 @@ public class RPITab extends AbstractLaunchConfigurationTab {
 	private void createNewHost() {
 		final IHost[] hosts = getHosts();
 		IInputValidator validator = new HostNameInputValidator(hosts);
-		InputDialog inputDialog = new InputDialog(getShell(), Messages.New_RPI_Host, Messages.Enter_Host_Name, "", validator); //$NON-NLS-3$
+		InputDialog inputDialog = new InputDialog(getShell(), Messages.New_RPI_Host, Messages.Enter_Host_Name, "", validator); //$NON-NLS-3$ //$NON-NLS-1$
 		int result = inputDialog.open();
 		if (result == Dialog.OK) {
 			String hostName = inputDialog.getValue();

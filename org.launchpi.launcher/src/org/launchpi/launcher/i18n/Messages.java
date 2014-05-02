@@ -9,6 +9,7 @@ public class Messages extends NLS {
 	public static String Choose_Host;
 	public static String Create_Config_Failed;
 	public static String Debug_Port;
+	public static String Display;
 	public static String Enter_Host_Name;
 	public static String File_Service_Not_Found;
 	public static String Host;

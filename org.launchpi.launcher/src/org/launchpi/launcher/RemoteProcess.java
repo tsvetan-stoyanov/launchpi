@@ -4,6 +4,8 @@ package org.launchpi.launcher;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.debug.core.DebugEvent;
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.DebugPlugin;
@@ -62,9 +64,15 @@ public class RemoteProcess implements IProcess, ISystemResourceChangeListener{
 	}
 
 	@Override
-	public void terminate() {
+	public void terminate() throws DebugException {
 		streamsProxy.closeInputStream();
 		shell.exit();
+		try {
+			cmdSubSystem.disconnect();
+		} catch (Exception e) {
+			throw new DebugException(new Status(
+					IStatus.WARNING, LaunchPlugin.PLUGIN_ID, "Cannot disconnect command subsystem", e)); //$NON-NLS-1$
+		}
 		terminated = true;
 		RSECorePlugin.getTheSystemRegistry().removeSystemResourceChangeListener(this);
 		DebugPlugin.getDefault().fireDebugEventSet(new DebugEvent[] {new DebugEvent(this, DebugEvent.TERMINATE)});
@@ -105,7 +113,11 @@ public class RemoteProcess implements IProcess, ISystemResourceChangeListener{
 		if (evt.getType() == ISystemResourceChangeEvents.EVENT_COMMAND_SHELL_FINISHED) {
 			Object src = evt.getSource();
 			if (this.equals(src)) { 
-				terminate();
+				try {
+					terminate();
+				} catch (DebugException e) {
+					throw new IllegalStateException(e);
+				}
 			}
 		}
 	}

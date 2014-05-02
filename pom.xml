@@ -8,6 +8,7 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<modules>
+		<module>org.launchpi.target</module>
 		<module>org.launchpi.launcher</module>
 		<module>org.launchpi.feature</module>
 		<module>org.launchpi.us</module>
@@ -16,16 +17,22 @@
 	<properties>
 		<tycho.version>0.19.0</tycho.version>
 		<juno-repo.url>http://download.eclipse.org/releases/juno</juno-repo.url>
+		<orbit-repo.url>http://download.eclipse.org/tools/orbit/downloads/drops/R20140114142710/repository</orbit-repo.url>
 	</properties>
-
+<!-- 
 	<repositories>
 		<repository>
 			<id>juno</id>
 			<url>${juno-repo.url}</url>
 			<layout>p2</layout>
 		</repository>
+		<repository>
+			<id>orbit</id>
+			<url>${orbit-repo.url}</url>
+			<layout>p2</layout>
+		</repository>
 	</repositories>
-
+-->
 	<build>
 		<plugins>
 			<plugin>
@@ -50,6 +57,13 @@
 				<artifactId>target-platform-configuration</artifactId>
 				<version>${tycho.version}</version>
 				<configuration>
+					<target>
+						<artifact>
+							<groupId>org.launchpi</groupId>
+							<artifactId>org.launchpi.target</artifactId>
+							<version>0.0.1-SNAPSHOT</version>
+						</artifact>
+					</target>
 					<environments>
 						<environment>
 							<os>linux</os>

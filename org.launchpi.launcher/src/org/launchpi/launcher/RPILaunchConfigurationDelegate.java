@@ -15,7 +15,7 @@ public class RPILaunchConfigurationDelegate extends AbstractJavaLaunchConfigurat
 			ILaunch launch, IProgressMonitor monitor) throws CoreException {
 
 		try {
-			RemoteProcess remoteProcess = RemoteProcessFactory.createRemoteProcess(launch, this, configuration, mode, monitor);
+			RemoteProcess remoteProcess = new RemoteProcessFactory(launch, this, configuration, mode).createRemoteProcess(monitor);
 			launch.addProcess(remoteProcess);
 		} catch (Exception e) {
 			LaunchPlugin.reportError(Messages.Start_Failed, e);

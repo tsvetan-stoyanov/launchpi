@@ -17,7 +17,7 @@ import org.osgi.framework.Bundle;
 
 public class LaunchPlugin extends AbstractUIPlugin {
 	
-	private static final String PLUGIN_ID = "org.launchpi.launcher"; //$NON-NLS-1$
+	public static final String PLUGIN_ID = "org.launchpi.launcher"; //$NON-NLS-1$
 	
 	private static LaunchPlugin INSTANCE;
 
