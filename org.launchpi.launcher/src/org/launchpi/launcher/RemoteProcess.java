@@ -19,6 +19,8 @@ import org.eclipse.rse.core.events.ISystemResourceChangeEvent;
 import org.eclipse.rse.core.events.ISystemResourceChangeEvents;
 import org.eclipse.rse.core.events.ISystemResourceChangeListener;
 import org.eclipse.rse.core.events.SystemResourceChangeEvent;
+import org.eclipse.rse.core.model.ISystemRegistry;
+import org.eclipse.rse.services.shells.AbstractHostShellOutputReader;
 import org.eclipse.rse.services.shells.IHostShell;
 import org.eclipse.rse.subsystems.shells.core.subsystems.IRemoteCmdSubSystem;
 
@@ -44,7 +46,7 @@ public class RemoteProcess implements IProcess, ISystemResourceChangeListener{
 		
 		streamsProxy = new RemoteProcessStreamsProxy(shell);
 		streamsProxy.getOutputStreamMonitor().addListener(new OutputStreamListener());
-		RSECorePlugin.getTheSystemRegistry().addSystemResourceChangeListener(this);
+		getSystemRegistry().addSystemResourceChangeListener(this);
 	}
 
 	@SuppressWarnings("rawtypes")
@@ -67,6 +69,8 @@ public class RemoteProcess implements IProcess, ISystemResourceChangeListener{
 	public void terminate() throws DebugException {
 		streamsProxy.closeInputStream();
 		shell.exit();
+		((AbstractHostShellOutputReader) shell.getStandardOutputReader()).interrupt();
+		((AbstractHostShellOutputReader) shell.getStandardErrorReader()).interrupt();
 		try {
 			cmdSubSystem.disconnect();
 		} catch (Exception e) {
@@ -74,7 +78,7 @@ public class RemoteProcess implements IProcess, ISystemResourceChangeListener{
 					IStatus.WARNING, LaunchPlugin.PLUGIN_ID, "Cannot disconnect command subsystem", e)); //$NON-NLS-1$
 		}
 		terminated = true;
-		RSECorePlugin.getTheSystemRegistry().removeSystemResourceChangeListener(this);
+		getSystemRegistry().removeSystemResourceChangeListener(this);
 		DebugPlugin.getDefault().fireDebugEventSet(new DebugEvent[] {new DebugEvent(this, DebugEvent.TERMINATE)});
 	}
 
@@ -122,12 +126,16 @@ public class RemoteProcess implements IProcess, ISystemResourceChangeListener{
 		}
 	}
 	
+	private ISystemRegistry getSystemRegistry() {
+		return RSECorePlugin.getTheSystemRegistry();
+	}
+	
 	private class OutputStreamListener implements IStreamListener {
 
 		@Override
 		public void streamAppended(String text, IStreamMonitor monitor) {
 			if (text.length() == 0 && !shell.isActive()) {
-				RSECorePlugin.getTheSystemRegistry().fireEvent(
+				getSystemRegistry().fireEvent(
 						new SystemResourceChangeEvent(RemoteProcess.this, ISystemResourceChangeEvents.EVENT_COMMAND_SHELL_FINISHED, cmdSubSystem));
 			}
 		}

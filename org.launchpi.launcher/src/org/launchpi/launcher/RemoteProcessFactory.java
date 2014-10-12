@@ -118,7 +118,7 @@ public class RemoteProcessFactory {
 	}
 	
 	private void addUntarCmd(StringBuilder buf) throws CoreException {
-		buf.append(" tar -xf ").append(getArchiveName()).append(";"); //$NON-NLS-1$ //$NON-NLS-2$
+		buf.append(" tar -xf \"").append(getArchiveName()).append("\";"); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 	
 	private String getArchiveName() throws CoreException {

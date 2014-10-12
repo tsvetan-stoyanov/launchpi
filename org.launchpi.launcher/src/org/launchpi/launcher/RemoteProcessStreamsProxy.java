@@ -86,16 +86,22 @@ public class RemoteProcessStreamsProxy implements IStreamsProxy2{
 					continue;
 				}
 				buf.append(lineContent);
-				buf.append("\r\n"); //$NON-NLS-1$
+				buf.append(System.lineSeparator());
 			}
 			
-			String newContent = buf.toString();
+			String newContent = null;
+			if (buf.length() != 0) {
+				newContent = buf.toString();
+				contents.append(newContent);
+			} else {
+				newContent = "";
+			}
 			
-			contents.append(newContent);
 			for (Object listener : listeners.getListeners()) {
 				IStreamListener streamListener = (IStreamListener) listener;
 				streamListener.streamAppended(newContent, this);
 			}
+
 		}
 		
 		public void stop() {
