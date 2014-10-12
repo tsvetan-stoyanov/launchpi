@@ -86,7 +86,7 @@ public class RemoteProcessStreamsProxy implements IStreamsProxy2{
 					continue;
 				}
 				buf.append(lineContent);
-				buf.append(System.lineSeparator());
+				buf.append(System.getProperty("line.separator"));
 			}
 			
 			String newContent = null;
