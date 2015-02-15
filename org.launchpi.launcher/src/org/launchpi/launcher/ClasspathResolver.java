@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IPath;
@@ -31,27 +32,33 @@ public class ClasspathResolver {
 	private Collection<File> getClasspathFiles(Collection<IClasspathEntry> classpathEntries) throws JavaModelException {
 		List<File> files = new ArrayList<File>();
 		for (IClasspathEntry classpathEntry : classpathEntries) {
-			files.add(getFile(classpathEntry));
+			files.addAll(getFiles(classpathEntry));
 		}
 		return files;
 	}
 	
-	private File getFile(IClasspathEntry classpathEntry) throws JavaModelException {
+	private Collection<File> getFiles(IClasspathEntry classpathEntry) throws JavaModelException {
 		int entryKind = classpathEntry.getEntryKind();
-		File file = null;
+		ArrayList<File> files = new ArrayList<File>(1);
 		
 		if (entryKind == IClasspathEntry.CPE_SOURCE) {
 			IPath outputLocation = classpathEntry.getOutputLocation();
 			if (outputLocation == null) {
 				outputLocation = project.getOutputLocation();
 			}
-			file = ResourcesPlugin.getWorkspace().getRoot().findMember(outputLocation, false).getLocation().toFile();
+			files.add(getResource(outputLocation).getLocation().toFile());
 		} else if (entryKind == IClasspathEntry.CPE_LIBRARY) {
 			IPath outputLocation = classpathEntry.getPath();
-			IResource resource = ResourcesPlugin.getWorkspace().getRoot().findMember(outputLocation, false);
-			file = resource != null ? resource.getLocation().toFile() : outputLocation.toFile();
+			IResource resource = getResource(outputLocation);
+			files.add(resource != null ? resource.getLocation().toFile() : outputLocation.toFile());
+		} else if (entryKind == IClasspathEntry.CPE_PROJECT) {
+			IPath outputLocation = classpathEntry.getPath();
+			IProject refProject = (IProject) getResource(outputLocation);
+			IJavaProject refJavaProject = JavaCore.create(refProject);
+			ClasspathResolver resolver = new ClasspathResolver(refJavaProject);
+			files.addAll(resolver.resolve());
 		}
-		return file;
+		return files;
 	}
 	
 	private Collection<IClasspathEntry> getResolvedClasspath() throws JavaModelException {
@@ -73,5 +80,9 @@ public class ClasspathResolver {
 				}
 			}
 		}
+	}
+	
+	private IResource getResource(IPath path) {
+		return ResourcesPlugin.getWorkspace().getRoot().findMember(path, false);
 	}
 }
