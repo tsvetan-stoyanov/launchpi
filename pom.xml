@@ -16,23 +16,8 @@
 
 	<properties>
 		<tycho.version>0.19.0</tycho.version>
-		<juno-repo.url>http://download.eclipse.org/releases/juno</juno-repo.url>
-		<orbit-repo.url>http://download.eclipse.org/tools/orbit/downloads/drops/R20140114142710/repository</orbit-repo.url>
 	</properties>
-<!-- 
-	<repositories>
-		<repository>
-			<id>juno</id>
-			<url>${juno-repo.url}</url>
-			<layout>p2</layout>
-		</repository>
-		<repository>
-			<id>orbit</id>
-			<url>${orbit-repo.url}</url>
-			<layout>p2</layout>
-		</repository>
-	</repositories>
--->
+
 	<build>
 		<plugins>
 			<plugin>
@@ -52,6 +37,19 @@
 				<extensions>true</extensions>
 			</plugin>
 
+			<plugin>
+				<groupId>org.eclipse.tycho</groupId>
+				<artifactId>tycho-packaging-plugin</artifactId>
+				<version>${tycho.version}</version>
+				<configuration>
+					<archive>
+						<manifestEntries>
+							<Built-By>launchpi</Built-By>
+						</manifestEntries>
+					</archive>
+				</configuration>
+			</plugin>
+			
 			<plugin>
 				<groupId>org.eclipse.tycho</groupId>
 				<artifactId>target-platform-configuration</artifactId>

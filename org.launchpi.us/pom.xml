@@ -11,5 +11,5 @@
 	</parent>
 
 	<artifactId>org.launchpi.us</artifactId>
-	<packaging>eclipse-update-site</packaging>
+	<packaging>eclipse-repository</packaging>
 </project>
