@@ -12,6 +12,7 @@ import org.apache.commons.compress.archivers.ArchiveException;
 import org.apache.commons.compress.archivers.ArchiveOutputStream;
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.utils.IOUtils;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -63,10 +64,11 @@ public class ProjectSynchronizer {
 		}
 		
 		FileOutputStream fos = null;
-		ArchiveOutputStream os = null;
+		TarArchiveOutputStream os = null;
 		try {
 			fos = new FileOutputStream(archiveFile);
-			os = new ArchiveStreamFactory().createArchiveOutputStream(ArchiveStreamFactory.TAR, fos);
+			os = (TarArchiveOutputStream) new ArchiveStreamFactory().createArchiveOutputStream(ArchiveStreamFactory.TAR, fos);
+			os.setLongFileMode(TarArchiveOutputStream.LONGFILE_GNU);
 			LinkedList<String> pathElements = new LinkedList<String>();
 			for (File f : classpathEntries) {
 				if (f.isFile()) {
