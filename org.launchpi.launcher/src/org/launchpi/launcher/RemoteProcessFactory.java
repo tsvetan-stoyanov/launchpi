@@ -63,7 +63,7 @@ public class RemoteProcessFactory {
 			IProject project = delegate.getJavaProject(configuration).getProject();
 			String workingFolder = getWorkingFolder(fileServiceSubsystem, project);
 			String homeFolder = fileServiceSubsystem.getFileService().getUserHome().getAbsolutePath();
-			ProjectSynchronizer synchronizer = new ProjectSynchronizer(project, workingFolder, fileServiceSubsystem);
+			ProjectSynchronizer synchronizer = new ProjectSynchronizer(project, workingFolder, fileServiceSubsystem, cmdSubSystem);
 			synchronizer.synchronize(monitor);
 	
 			String cmd = buildCommandLine(homeFolder);
@@ -81,7 +81,6 @@ public class RemoteProcessFactory {
 	
 	private String buildCommandLine(String homeFolder) throws CoreException {
 		StringBuilder cmdBuf = new StringBuilder();
-		addUntarCmd(cmdBuf);
 		addRunAsRootOption(cmdBuf);
 		addEnvironmentVariables(cmdBuf, homeFolder);
 		cmdBuf.append(" java "); //$NON-NLS-1$
@@ -115,14 +114,6 @@ public class RemoteProcessFactory {
 			}
 		}
 		throw new IllegalStateException(Messages.File_Service_Not_Found + host.getName());
-	}
-	
-	private void addUntarCmd(StringBuilder buf) throws CoreException {
-		buf.append(" tar -xf \"").append(getArchiveName()).append("\";"); //$NON-NLS-1$ //$NON-NLS-2$
-	}
-	
-	private String getArchiveName() throws CoreException {
-		return delegate.getJavaProject(configuration).getProject().getName() + ".tar"; //$NON-NLS-1$
 	}
 	
 	private void addRunAsRootOption(StringBuilder cmdBuf) throws CoreException {
