@@ -58,7 +58,7 @@ public class RemoteProcessFactory {
 			IRemoteCmdSubSystem cmdSubSystem = RemoteCommandHelpers.getCmdSubSystem(host);
 			cmdSubSystem.connect(monitor, false);
 			monitor.worked(1);
-	
+
 			fileServiceSubsystem = getFileServiceSubsystem(host);
 			IProject project = delegate.getJavaProject(configuration).getProject();
 			String workingFolder = getWorkingFolder(fileServiceSubsystem, project);
@@ -69,7 +69,9 @@ public class RemoteProcessFactory {
 			String cmd = buildCommandLine(homeFolder);
 			monitor.subTask(Messages.Progress_Launching_Java);
 			IShellService shellService = getShellService(host);
-			IHostShell shell = shellService.runCommand(workingFolder, cmd, new String[0], new NullProgressMonitor()); //$NON-NLS-1$
+			IHostShell shell = shellService.launchShell(workingFolder, new String[0], new NullProgressMonitor()); //$NON-NLS-1$
+			configureShell(shell);
+			shell.writeToShell(cmd);
 			monitor.worked(1);
 			return new RemoteProcess(launch, shell, cmdSubSystem);
 		} finally {
@@ -92,6 +94,10 @@ public class RemoteProcessFactory {
 		addArguments(cmdBuf);
 		cmdBuf.append(" ; exit"); //$NON-NLS-1$
 		return cmdBuf.toString();
+	}
+	
+	private void configureShell(IHostShell shell) {
+		shell.writeToShell("stty cols 1024");
 	}
 	
 	private String getWorkingFolder(IFileServiceSubSystem fileServiceSubsystem, IProject project) throws CoreException {
