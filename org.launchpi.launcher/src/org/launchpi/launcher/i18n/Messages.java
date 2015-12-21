@@ -22,6 +22,7 @@ public class Messages extends NLS {
 	public static String Progress_Launching_Java;
 	public static String Progress_Synchronizing_CP;
 	public static String Progress_Waiting_Debug_Connection;
+	public static String Debug_Connection_Failed;
 	public static String Raspberry_PI;
 	public static String Run_As_Root;
 	static {
